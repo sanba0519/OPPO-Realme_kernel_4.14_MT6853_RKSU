@@ -91,12 +91,12 @@ jobs:
     - name: 上传 Anykernel3
       uses: actions/upload-artifact@v4
       with:
-        name: 安卓12-mtk6853通用内核-卡刷包
+        name: android-mtk6853-kernel-Anykernel3
         path: kernel_workspace/AnyKernel3/*
         
 
     - name: 上传编译内核
       uses: actions/upload-artifact@v4
       with:
-        name: mtk6853通用内核-Image.gz
+        name: mtk6853-Image.gz
         path: kernel_workspace/android-kernel/out/arch/arm64/boot/Image.gz
