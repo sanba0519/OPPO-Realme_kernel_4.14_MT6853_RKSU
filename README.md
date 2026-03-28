@@ -1,5 +1,5 @@
 
-# 请移步至[此仓库](https://github.com/sanba0519/android_kernel_4.14_MT6853)
+# 此仓库作为引流仓库 请移步至[此仓库](https://github.com/sanba0519/android_kernel_4.14_MT6853)
 ***
 ## android_kernel_4.14_MT6853_RKSU
 >[!note]
