@@ -1,4 +1,3 @@
-
 # For more information about using CMake with Android Studio, read the
 # documentation: https://d.android.com/studio/projects/add-native-code.html
 
@@ -9,10 +8,16 @@ project("kernelsu")
 
 add_library(kernelsu
         SHARED
-        jni.cc
-        ksu.cc
-        )
+        jni.c
+        ksu.c
+        legacy.c
+)
+
+target_include_directories(kernelsu PRIVATE .)
 
 find_library(log-lib log)
 
-target_link_libraries(kernelsu ${log-lib})
+target_link_libraries(
+        kernelsu
+        ${log-lib}
+)

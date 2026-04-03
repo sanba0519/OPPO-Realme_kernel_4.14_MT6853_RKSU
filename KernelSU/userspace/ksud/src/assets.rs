@@ -1,28 +1,67 @@
 use anyhow::Result;
-use const_format::concatcp;
 use rust_embed::RustEmbed;
 
-use crate::{defs::BINARY_DIR, utils};
+#[cfg(target_os = "android")]
+mod android {
+    use const_format::concatcp;
 
-pub const RESETPROP_PATH: &str = concatcp!(BINARY_DIR, "resetprop");
-pub const BUSYBOX_PATH: &str = concatcp!(BINARY_DIR, "busybox");
+    use crate::{android::utils::ensure_binary, assets::Asset, defs::BINARY_DIR};
 
-#[cfg(target_arch = "aarch64")]
-#[derive(RustEmbed)]
-#[folder = "bin/aarch64"]
-struct Asset;
+    pub const RESETPROP_PATH: &str = concatcp!(BINARY_DIR, "resetprop");
+    pub const BUSYBOX_PATH: &str = concatcp!(BINARY_DIR, "busybox");
+    pub const BOOTCTL_PATH: &str = concatcp!(BINARY_DIR, "bootctl");
 
-#[cfg(target_arch = "x86_64")]
+    pub fn ensure_binaries(ignore_if_exist: bool) -> anyhow::Result<()> {
+        for file in Asset::iter() {
+            if file == "ksuinit" || file.ends_with(".ko") {
+                // don't extract ksuinit and kernel modules
+                continue;
+            }
+            let asset =
+                Asset::get(&file).ok_or_else(|| anyhow::anyhow!("asset not found: {file}"))?;
+            ensure_binary(format!("{BINARY_DIR}{file}"), &asset.data, ignore_if_exist)?;
+        }
+
+        // Create resetprop -> ksud symlink (resetprop is now built into ksud)
+        let resetprop_link = RESETPROP_PATH;
+        let _ = std::fs::remove_file(resetprop_link);
+        std::os::unix::fs::symlink("/data/adb/ksud", resetprop_link)?;
+
+        Ok(())
+    }
+}
+
+#[cfg(target_os = "android")]
+pub use android::*;
+
+#[cfg(all(target_arch = "x86_64", target_os = "android"))]
 #[derive(RustEmbed)]
 #[folder = "bin/x86_64"]
 struct Asset;
 
-pub fn ensure_binaries() -> Result<()> {
+// IF NOT x86_64 ANDROID, ie. macos, linux, windows, always use aarch64
+#[cfg(all(target_arch = "aarch64", target_os = "android"))]
+#[derive(RustEmbed)]
+#[folder = "bin/aarch64"]
+struct Asset;
+
+#[cfg(all(target_arch = "arm", target_os = "android"))]
+#[derive(RustEmbed)]
+#[folder = "bin/arm"]
+struct Asset;
+
+pub fn list_supported_kmi() -> std::vec::Vec<std::string::String> {
+    let mut list = Vec::new();
     for file in Asset::iter() {
-        utils::ensure_binary(
-            format!("{BINARY_DIR}{file}"),
-            &Asset::get(&file).unwrap().data,
-        )?
+        // kmi_name = "xxx_kernelsu.ko"
+        if let Some(kmi) = file.strip_suffix("_kernelsu.ko") {
+            list.push(kmi.to_string());
+        }
     }
-    Ok(())
+    list
+}
+
+pub fn get_asset(name: &str) -> Result<Box<dyn AsRef<[u8]>>> {
+    let asset = Asset::get(name).ok_or_else(|| anyhow::anyhow!("asset not found: {name}"))?;
+    Ok(Box::new(asset.data))
 }

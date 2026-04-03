@@ -1,17 +1,35 @@
+#![deny(clippy::all, clippy::pedantic)]
+#![warn(clippy::nursery)]
+#![allow(
+    clippy::module_name_repetitions,
+    clippy::cast_possible_truncation,
+    clippy::cast_sign_loss,
+    clippy::cast_precision_loss,
+    clippy::doc_markdown,
+    clippy::too_many_lines,
+    clippy::cast_possible_wrap
+)]
+
+#[cfg(target_os = "android")]
+mod android;
 mod apk_sign;
 mod assets;
-mod cli;
-mod debug;
+mod boot_patch;
+#[cfg(not(target_os = "android"))]
+mod cli_non_android;
 mod defs;
-mod event;
-mod ksu;
-mod module;
-mod mount;
-mod profile;
-mod restorecon;
-mod sepolicy;
-mod utils;
+
+#[cfg(target_os = "android")]
+#[allow(nonstandard_style, unused, unsafe_op_in_unsafe_fn)]
+mod ksu_uapi;
 
 fn main() -> anyhow::Result<()> {
-    cli::run()
+    #[cfg(target_os = "android")]
+    {
+        android::cli::run()
+    }
+    #[cfg(not(target_os = "android"))]
+    {
+        cli_non_android::run()
+    }
 }

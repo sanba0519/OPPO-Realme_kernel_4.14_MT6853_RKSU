@@ -1,8 +1,4 @@
-use std::env;
-use std::fs::File;
-use std::io::Write;
-use std::path::Path;
-use std::process::Command;
+use std::{env, fs::File, io::Write, path::Path, process::Command};
 
 fn get_git_version() -> Result<(u32, String), std::io::Error> {
     let output = Command::new("git")
@@ -14,8 +10,8 @@ fn get_git_version() -> Result<(u32, String), std::io::Error> {
     let version_code: u32 = version_code
         .trim()
         .parse()
-        .map_err(|_| std::io::Error::new(std::io::ErrorKind::Other, "Failed to parse git count"))?;
-    let version_code = 10000 + 200 + version_code; // For historical reasons
+        .map_err(|_| std::io::Error::other("Failed to parse git count"))?;
+    let version_code = 30000 + 700 + version_code; // For historical reasons
 
     let version_name = String::from_utf8(
         Command::new("git")
@@ -23,14 +19,35 @@ fn get_git_version() -> Result<(u32, String), std::io::Error> {
             .output()?
             .stdout,
     )
-    .map_err(|_| {
-        std::io::Error::new(
-            std::io::ErrorKind::Other,
-            "Failed to read git describe stdout",
-        )
-    })?;
+    .map_err(|_| std::io::Error::other("Failed to parse git count"))?;
     let version_name = version_name.trim_start_matches('v').to_string();
     Ok((version_code, version_name))
+}
+
+fn configure_bindgen() {
+    // The bindgen::Builder is the main entry point
+    // to bindgen, and lets you build up options for
+    // the resulting bindings.
+    let bindings = bindgen::Builder::default()
+        // The input header we would like to generate
+        // bindings for.
+        .header("src/ksu_uapi.h")
+        .clang_args(["-x", "c++", "-I../../"])
+        // Tell cargo to invalidate the built crate whenever any of the
+        // included header files changed.
+        .parse_callbacks(Box::new(bindgen::CargoCallbacks::new()))
+        // Finish the builder and generate the bindings.
+        .generate()
+        // Unwrap the Result and panic on failure.
+        .expect("Unable to generate bindings");
+
+    // Write the bindings to the $OUT_DIR/bindings.rs file.
+    let out_path = std::path::PathBuf::from(env::var("OUT_DIR").unwrap());
+    // for debug, uncomment below
+    // let out_path = std::path::PathBuf::from(env::var("CARGO_MANIFEST_DIR").unwrap());
+    bindings
+        .write_to_file(out_path.join("bindings.rs"))
+        .expect("Couldn't write bindings!");
 }
 
 fn main() {
@@ -53,4 +70,9 @@ fn main() {
         .expect("Failed to create VERSION_NAME")
         .write_all(name.trim().as_bytes())
         .expect("Failed to write VERSION_NAME");
+
+    let target_os = env::var("CARGO_CFG_TARGET_OS").expect("CARGO_CFG_TARGET_OS not set");
+    if target_os == "android" {
+        configure_bindgen();
+    }
 }

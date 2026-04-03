@@ -1,0 +1,18 @@
+package com.resukisu.resukisu.ui.util
+
+import androidx.compose.foundation.pager.PagerState
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.runtime.compositionLocalOf
+import dev.chrisbanes.haze.HazeState
+
+val LocalSnackbarHost = compositionLocalOf<SnackbarHostState> {
+    error("CompositionLocal LocalSnackbarController not present")
+}
+
+val LocalHazeState = compositionLocalOf<HazeState?> {
+    error("CompositionLocal PageKey not present")
+}
+
+val LocalPagerState = compositionLocalOf<PagerState> { error("No pager state") }
+val LocalHandlePageChange = compositionLocalOf<(Int) -> Unit> { error("No handle page change") }
+val LocalSelectedPage = compositionLocalOf<Int> { error("No selected page") }

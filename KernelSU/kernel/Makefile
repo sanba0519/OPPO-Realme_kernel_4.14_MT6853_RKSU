@@ -1,36 +1,22 @@
-obj-y += ksu.o
-obj-y += allowlist.o
-kernelsu-objs := apk_sign.o
-obj-y += kernelsu.o
-obj-y += module_api.o
-obj-y += sucompat.o
-obj-y += uid_observer.o
-obj-y += manager.o
-obj-y += core_hook.o
-obj-y += ksud.o
-obj-y += embed_ksud.o
-obj-y += kernel_compat.o
+KDIR := $(KDIR)
+MDIR := $(realpath $(dir $(abspath $(lastword $(MAKEFILE_LIST)))))
 
-obj-y += selinux/
-# .git is a text file while the module is imported by 'git submodule add'.
-KSU_GIT_VERSION := 1014
-# ksu_version: major * 10000 + git version + 200 for historical reasons
-$(eval KSU_VERSION=$(shell expr 10000 + $(KSU_GIT_VERSION) + 200))
-$(info -- KernelSU version: $(KSU_VERSION))
-ccflags-y += -DKSU_VERSION=$(KSU_VERSION)
-
-ifndef KSU_EXPECTED_SIZE
-KSU_EXPECTED_SIZE := 0x033b
+ifneq ($(KDIR),)
+$(info -- KDIR: $(KDIR))
+$(info -- MDIR: $(MDIR))
 endif
 
-ifndef KSU_EXPECTED_HASH
-KSU_EXPECTED_HASH := 0xb0b91415
-endif
+.PHONY: all compdb clean format check-format
 
-$(info -- KernelSU Manager signature size: $(KSU_EXPECTED_SIZE))
-$(info -- KernelSU Manager signature hash: $(KSU_EXPECTED_HASH))
+all:
+	make -C $(KDIR) M=$(MDIR) modules -j$(shell nproc)
+compdb:
+	python3 $(MDIR)/.vscode/generate_compdb.py -O $(KDIR) $(MDIR)
+clean:
+	make -C $(KDIR) M=$(MDIR) clean
+format:
+	find . \( -name "*.c" -o -name "*.h" \) -print0 | xargs -0 clang-format -i
+check-format:
+	find . \( -name "*.c" -o -name "*.h" \) -print0 | xargs -0 clang-format --dry-run --Werror
 
-ccflags-y += -DEXPECTED_SIZE=$(KSU_EXPECTED_SIZE)
-ccflags-y += -DEXPECTED_HASH=$(KSU_EXPECTED_HASH)
-ccflags-y += -Wno-implicit-function-declaration -Wno-strict-prototypes -Wno-int-conversion -Wno-gcc-compat
-ccflags-y += -Wno-declaration-after-statement
+# Keep a new line here!! Because someone may append config
