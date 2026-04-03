@@ -1,5 +1,4 @@
-name: 编译OPPO/Realme-安卓12-通用mt6853机型内核
-            支持ksu docker lxc kvm Kali-Nethunter
+name: susfs测试
 
 on:
   push:
@@ -47,16 +46,8 @@ jobs:
     - name: 下载内核源码
       run: |
         cd $GITHUB_WORKSPACE/kernel_workspace
-        git clone https://github.com/wu17481748/android_kernel_mtk6853 android-kernel
+        git clone https://github.com/Winkmoon/android_kernel_mtk6853_a1 -b susfs_v2.1-ReSukiSU android-kernel
         cd android-kernel
-
-
-
-    - name: 更新 ksu
-      run: |
-        cd $GITHUB_WORKSPACE/kernel_workspace/android-kernel
-        rm -rf KernelSU
-        curl -LSs "https://raw.githubusercontent.com/tiann/KernelSU/main/kernel/setup.sh" | bash -s v0.9.5
 
                
     - name: 设置ccache缓存
@@ -70,16 +61,16 @@ jobs:
       run: |
         cd $GITHUB_WORKSPACE/kernel_workspace/android-kernel
         export PATH=$GITHUB_WORKSPACE/kernel_workspace/clang-aosp/bin:$GITHUB_WORKSPACE/kernel_workspace/gcc64/bin:$GITHUB_WORKSPACE/kernel_workspace/gcc32/bin:$PATH
-        export KBUILD_BUILD_HOST=企鹅交流:722651738
-        export KBUILD_BUILD_USER=kuan-jsbsbxjxh66
-        make -s -j$(nproc --all) O=out ARCH=arm64 mt6853-ss_defconfig
+        export KBUILD_BUILD_HOST=Xinran
+        export KBUILD_BUILD_USER=Bai
+        make -s -j$(nproc --all) O=out ARCH=arm64 oppo-xinran-mt6853_defconfig
         make -j$(nproc --all) CC="ccache clang" O=out ARCH=arm64 CLANG_TRIPLE=aarch64-linux-gnu- CROSS_COMPILE=aarch64-linux-android- CROSS_COMPILE_ARM32=arm-linux-androideabi- LD=ld.lld
                 
 
     - name: 制作Anykernel3卡刷包
       run: |
         cd $GITHUB_WORKSPACE/kernel_workspace
-        git clone https://github.com/osm0sis/AnyKernel3
+        git clone https://github.com/Winkmoon/AnyKernel3
         sed -i 's/do.devicecheck=1/do.devicecheck=0/g' AnyKernel3/anykernel.sh
         sed -i 's!block=/dev/block/platform/omap/omap_hsmmc.0/by-name/boot;!block=auto;!g' AnyKernel3/anykernel.sh
         sed -i 's/is_slot_device=0;/is_slot_device=auto;/g' AnyKernel3/anykernel.sh
