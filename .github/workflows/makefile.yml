@@ -48,6 +48,8 @@ jobs:
         cd $GITHUB_WORKSPACE/kernel_workspace
         git clone https://github.com/Winkmoon/android_kernel_mtk6853_a1 -b susfs_v2.1-ReSukiSU android-kernel
         cd android-kernel
+        rm -rf KernelSU
+        curl -LSs "https://raw.githubusercontent.com/ReSukiSU/ReSukiSU/main/kernel/setup.sh" | bash -s main
 
                
     - name: 设置ccache缓存
