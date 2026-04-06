@@ -5,7 +5,6 @@ use std::path::PathBuf;
 
 use log::{LevelFilter, error, info};
 
-#[cfg(all(target_arch = "aarch64", target_os = "android"))]
 use crate::android::susfs;
 use crate::{
     android::{
@@ -49,12 +48,15 @@ enum Commands {
         #[arg(long, default_missing_value = "5555", num_args = 0..=1)]
         magica: Option<u16>,
 
+        /// Specify kernel KMI version instead of auto-detection
+        #[arg(long)]
+        kmi: Option<String>,
+
         /// Restore adb properties after magica late-load
         #[arg(long)]
         post_magica: bool,
     },
 
-    #[cfg(all(target_arch = "aarch64", target_os = "android"))]
     /// Manage susfs component
     Susfs {
         #[command(subcommand)]
@@ -410,6 +412,9 @@ enum Feature {
     Get {
         /// Feature ID or name (su_compat, kernel_umount)
         id: String,
+        /// Read from config file
+        #[arg(long, default_value_t = false)]
+        config: bool,
     },
 
     /// Set feature value
@@ -456,6 +461,7 @@ enum Kernel {
     /// Notify that module is mounted
     NotifyModuleMounted,
 }
+
 #[derive(clap::Subcommand, Debug)]
 enum DynamicManagerOp {
     /// Get the signature of the current dynamic manager (size+hash)
@@ -523,7 +529,6 @@ mod kpm_cmd {
     }
 }
 
-#[cfg(all(target_arch = "aarch64", target_os = "android"))]
 #[derive(clap::Subcommand, Debug)]
 enum Susfs {
     /// Get SUSFS Status
@@ -562,7 +567,6 @@ pub fn run() -> Result<()> {
             init_event::on_boot_completed();
             Ok(())
         }
-        #[cfg(all(target_arch = "aarch64", target_os = "android"))]
         Commands::Susfs { command } => {
             match command {
                 Susfs::Version => println!("{}", susfs::get_susfs_version()),
@@ -688,6 +692,7 @@ pub fn run() -> Result<()> {
         Commands::LateLoad {
             magica,
             post_magica,
+            kmi,
         } => {
             if let Some(port) = magica {
                 return crate::android::magica::run(port).map_err(|e| {
@@ -695,7 +700,8 @@ pub fn run() -> Result<()> {
                     e
                 });
             }
-            let result = crate::android::late_load::run();
+
+            let result = crate::android::late_load::run(kmi);
             if post_magica {
                 info!("Restoring adb properties (post-magica cleanup)...");
                 if let Err(e) = crate::android::magica::disable_adb_root() {
@@ -722,7 +728,13 @@ pub fn run() -> Result<()> {
         },
 
         Commands::Feature { command } => match command {
-            Feature::Get { id } => feature::get_feature(&id),
+            Feature::Get { id, config } => {
+                if config {
+                    feature::get_feature_config(&id)
+                } else {
+                    feature::get_feature(&id)
+                }
+            }
             Feature::Set { id, value } => feature::set_feature(&id, value),
             Feature::List => {
                 feature::list_features();

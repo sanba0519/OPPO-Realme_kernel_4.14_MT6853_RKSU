@@ -1,0 +1,21 @@
+# 内核编译输出
+out/
+out
+modules/
+modules
+*.ko
+*.o
+*.cmd
+*.d
+*.tmp
+*.order
+*.symvers
+.tmp_versions/
+.tmp_versions
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+certs/signing_key.pem
+certs/signing_key.x509

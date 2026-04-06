@@ -239,7 +239,21 @@ pub fn reset_std() -> Result<()> {
     Ok(())
 }
 
-pub fn daemonize<F: FnOnce() -> Result<()>>(configure: F) -> Result<()> {
+pub fn daemonize_with<F: FnOnce() -> Result<()>>(use_init_pgrp: bool, configure: F) -> Result<()> {
+    if !create_daemon_impl(use_init_pgrp, configure)? {
+        unsafe { libc::_exit(0) }
+    }
+    Ok(())
+}
+
+pub fn daemonize(use_init_pgrp: bool) -> Result<()> {
+    daemonize_with(use_init_pgrp, || Ok(()))
+}
+
+fn create_daemon_impl<F: FnOnce() -> Result<()>>(
+    use_init_pgrp: bool,
+    configure: F,
+) -> Result<bool> {
     unsafe {
         let pid = libc::fork();
         if pid < 0 {
@@ -258,19 +272,42 @@ pub fn daemonize<F: FnOnce() -> Result<()>>(configure: F) -> Result<()> {
         }
     }
 
-    setpgid(None, None)?;
-    switch_cgroups();
-    configure()?;
-    reset_std()?;
+    let do_configure = || -> Result<()> {
+        detach_process_group(use_init_pgrp);
+        switch_cgroups();
+        configure()?;
+        reset_std()?;
 
-    unsafe {
-        let pid = libc::fork();
-        if pid < 0 {
-            bail!("fork error {}", std::io::Error::last_os_error());
-        } else if pid > 0 {
-            libc::_exit(0);
+        unsafe {
+            let pid = libc::fork();
+            if pid < 0 {
+                bail!("fork error {}", std::io::Error::last_os_error());
+            } else if pid > 0 {
+                libc::_exit(0);
+            }
+        }
+        Ok(())
+    };
+
+    if let Err(e) = do_configure() {
+        log::error!("failed to configure daemon: {e:?}");
+        unsafe {
+            libc::_exit(1);
         }
     }
 
-    Ok(())
+    Ok(true)
+}
+
+pub fn detach_process_group(use_init_pgrp: bool) {
+    if use_init_pgrp {
+        if let Err(e) = ksucalls::set_init_pgrp() {
+            log::error!("failed to switch to init group: {e:?}");
+        } else {
+            return;
+        }
+    }
+    if let Err(e2) = setpgid(None, None) {
+        log::error!("failed to set process group: {e2:?}");
+    }
 }
