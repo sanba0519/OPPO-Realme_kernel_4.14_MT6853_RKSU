@@ -1,7 +1,6 @@
 name: susfs测试
 
 on:
-  push:
   workflow_dispatch:
   schedule:
     - cron: '0 0 * * 5' # Run every friday at midnight
