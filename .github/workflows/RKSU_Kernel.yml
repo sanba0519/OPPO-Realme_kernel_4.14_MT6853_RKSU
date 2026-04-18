@@ -146,12 +146,8 @@ jobs:
           --disable CONFIG_HAVE_KPROBES
 
         make O=out olddefconfig
-        
-        ./scripts/config --file out/.config \
-          --enable CONFIG_TCP_CONG_BBR \
-          --enable CONFIG_NET_SCH_FQ
-        make O=out olddefconfig
-        if [ "${{ github.event.inputs.BBR }}" = "true" ]; then
+
+        if [ "${{ github.event.inputs.BBR }}" = "true" ]; then 
           echo "启用 BBR..."
           ./scripts/config --file out/.config \
             --enable CONFIG_TCP_CONG_BBR \
