@@ -1,7 +1,8 @@
+# 欧加真 MT6853 系列通用4.14内核自动化编译脚本
 
 > [!IMPORTANT]
 > 此项目正计划重构 预计在六月底开始 敬请期待
-# 此仓库作为引流仓库 请移步至[此仓库](https://github.com/sanba0519/android_kernel_4.14_MT6853)
+# 此仓库作为引流仓库 请先移步至[此仓库](https://github.com/sanba0519/android_kernel_4.14_MT6853)
 ***
 ## android_kernel_4.14_MT6853_RKSU
 >[!note]
