@@ -19,3 +19,4 @@ TO DO:
      - [ ] [BBG](https://github.com/vc-teahouse/Baseband-guard)防格机
      - [ ] So on...
 - [ ] 修补bpf 
+- [ ] 自动发布到releases
