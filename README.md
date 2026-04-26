@@ -9,6 +9,7 @@
 >适用机型：MT6853 OPPO/Reamle OPPO A72, OPPO A53, OPPO K7x, OPPO Reno4SE, Realme Q2, Realme V15, Realme Q2 pro, OPPO A95, Realme V5 5G, Realme X7 5G Android 12 RKSU kernel
 >
 >版本：4.14.186
+>务必升级到安卓12再刷入此内核
 
 TO DO:
 - [ ] 适配最新版[RKSU](https://github.com/rsuntk/KernelSU)
