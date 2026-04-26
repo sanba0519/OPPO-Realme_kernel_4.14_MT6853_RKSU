@@ -12,7 +12,7 @@
 >务必升级到安卓12再刷入此内核
 
 TO DO:
-- [ ] 适配最新版[RKSU](https://github.com/rsuntk/KernelSU)
+- [ ] 适配最新版[RKSU](https://github.com/rsuntk/KernelSU)(先搁置 不知道为啥不行)
 - [ ] 内置[Re:SukiSU](https://github.com/ReSukiSU/ReSukiSU)
 - [ ] 开放创意工坊
      - [x] BBR加速
